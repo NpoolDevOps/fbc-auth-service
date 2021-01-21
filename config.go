@@ -1,12 +1,11 @@
 package main
 
 type Config struct {
-	Port int
+	Port   int
 	Domain string
 }
 
 var MyConfig = Config{
-	Port: 40008,
+	Port:   40008,
 	Domain: "auth.npool.com",
-
 }

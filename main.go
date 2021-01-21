@@ -1,27 +1,24 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
-	"net/http"
 	elog "github.com/EntropyPool/entropy-logger"
 	"github.com/NpoolRD/http-daemon"
 	"github.com/NpoolRD/service-register"
 	"github.com/go-resty/resty/v2"
-	"strings"
-	"io/ioutil"
-	"encoding/json"
-	nurl "net/url"
+	"net/http"
 )
 
 type SrvInfo struct {
-	Domain string `json:"domain"`
+	Domain  string   `json:"domain"`
 	IpPorts []string `json:"ip_ports"`
 }
 
 type LoginRequest struct {
 	Username string
-	Passwd string
-	AppId string
+	Passwd   string
+	AppId    string
 }
 
 type ApiResp struct {
@@ -38,39 +35,16 @@ func init() {
 	cli = resty.New()
 }
 
-func Post(url string, data map[string]string) (interface{}, error) {
-	values := makeValues(data)
-	info, err := http.Post(url, "application/x-www-form-urlencoded", strings.NewReader(values.Encode()))
-	if err != nil {
-		elog.Errorf(elog.Fields{}, "http post failed %v", err)
-		return nil, err
-	}
-	defer info.Body.Close()
-	body, err := ioutil.ReadAll(info.Body)
+func parseResponseBody(resBody []byte) *ApiResp {
+	var unmar map[string]interface{}
+	_ = json.Unmarshal(resBody, &unmar)
 
-	if err != nil {
-		elog.Errorf(elog.Fields{}, "read response body failed %v", err)
-		return nil, err
-	}
+	parseRes := new(ApiResp)
+	parseRes.Code = int(unmar["code"].(float64))
+	parseRes.Msg = unmar["msg"].(string)
+	parseRes.Body = unmar["body"]
 
-	var resp interface{}
-	err = json.Unmarshal(body, &resp)
-
-	if err != nil {
-		elog.Errorf(elog.Fields{}, "json unmarshal failed %v", err)
-		return nil, err
-	}
-
-	return resp, nil
-}
-
-func makeValues(data map[string]string) *nurl.Values {
-	params := nurl.Values{}
-	for key, val := range data {
-		params.Set(key, val)
-	}
-
-	return &params
+	return parseRes
 }
 
 func serveLogin(w http.ResponseWriter, req *http.Request) (interface{}, string, int) {
@@ -80,46 +54,41 @@ func serveLogin(w http.ResponseWriter, req *http.Request) (interface{}, string, 
 	}
 	username := params["username"][0]
 	passwd := params["passwd"][0]
-	/*
+
 	var jumpUrl = ""
 	if len(params["url"]) > 0 {
 		jumpUrl = params["url"][0]
 	}
-	*/
-	//var appId = ""
+
+	var appId = ""
 	url := getUrl("/auth/login")
 
-	/**
 	resp, err := cli.R().
-		SetHeader("Content-Type", "application/json").
-		SetBody(map[string]interface{}{"username": username, "passwd": passwd, "appid": appId}).
-	//	SetResult(&AuthSuccess{}).
+		SetQueryParam("username", username).
+		SetQueryParam("passwd", passwd).
+		SetQueryParam("appid", appId).
 		Post(url)
 
-	fmt.Println("lll", resp, url, jumpUrl, err)
-	*/
-
-	resp, err := Post(url, map[string]string{"username":username, "passwd":passwd})
 	if err != nil {
 		elog.Errorf(elog.Fields{}, "require failed: %v", err)
 		return nil, "server exception", 2
 	}
 
-	postRes := resp.(map[string]interface{})
-	code := int(postRes["code"].(float64))
-	msg := postRes["msg"].(string)
-	if code == 5 {
-		elog.Errorf(elog.Fields{}, "%v", msg)
-		code = 2
-		msg = "server exception"
+	apiResp := parseResponseBody(resp.Body())
+
+	if apiResp.Code == 0 {
+		body := apiResp.Body.(map[string]interface{})
+		jsonBody, _ := json.Marshal(map[string]string{"auth_code": body["auth_code"].(string), "url": jumpUrl})
+		_ = json.Unmarshal(jsonBody, &apiResp.Body)
 	}
 
-	body := postRes["body"].(map[string]interface{})
-	jsonBody, _ := json.Marshal(map[string]string{"auth_code": body["auth_code"].(string)})
-	var respo interface{}
-	_ = json.Unmarshal(jsonBody, &respo)
+	if apiResp.Code == 5 {
+		elog.Errorf(elog.Fields{}, "%v", apiResp.Msg)
+		apiResp.Code = 2
+		apiResp.Msg = "server exception"
+	}
 
-	return respo, msg, code
+	return apiResp.Body, apiResp.Msg, apiResp.Code
 }
 
 func serveLogout(w http.ResponseWriter, req *http.Request) (interface{}, string, int) {
@@ -129,19 +98,23 @@ func serveLogout(w http.ResponseWriter, req *http.Request) (interface{}, string,
 	}
 	authCode := params["auth_code"][0]
 	url := getUrl("/auth/logout")
-	resp, err := Post(url, map[string]string{"auth_code":authCode})
+
+	resp, err := cli.R().
+		SetQueryParam("auth_code", authCode).
+		Post(url)
+
+	fmt.Println(resp, err)
+
 	if err != nil {
 		elog.Errorf(elog.Fields{}, "require failed: %v", err)
 		return nil, "server exception", 2
 	}
-	fmt.Println(resp)
 
 	return nil, "", 0
 }
 
 func getUrl(uri string) string {
-	url := "http://106.14.125.55:40001"
-	//url := "http://localhost:40001"
+	url := "http://" + srvs[0].IpPorts[0]
 
 	return url + uri
 }
@@ -162,13 +135,13 @@ func main() {
 	httpdaemon.RegisterRouter(httpdaemon.HttpRouter{
 		Location: "/login",
 		Handler:  serveLogin,
-		Method: "POST",
+		Method:   "POST",
 	})
 
 	httpdaemon.RegisterRouter(httpdaemon.HttpRouter{
 		Location: "/logout",
 		Handler:  serveLogout,
-		Method: "POST",
+		Method:   "POST",
 	})
 
 	httpdaemon.Run(MyConfig.Port)
