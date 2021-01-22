@@ -21,30 +21,12 @@ type LoginRequest struct {
 	AppId    string
 }
 
-type ApiResp struct {
-	Code int         `json:"code"`
-	Msg  string      `json:"msg"`
-	Body interface{} `json:"body"`
-}
-
-var srvs []SrvInfo
+var srvs []srvreg.SrvInfo
 var cli *resty.Client
 
 func init() {
-	discoverService(MyConfig.Domain)
+	srvs = srvreg.BatchQuery(MyConfig.Targets)
 	cli = resty.New()
-}
-
-func parseResponseBody(resBody []byte) *ApiResp {
-	var unmar map[string]interface{}
-	_ = json.Unmarshal(resBody, &unmar)
-
-	parseRes := new(ApiResp)
-	parseRes.Code = int(unmar["code"].(float64))
-	parseRes.Msg = unmar["msg"].(string)
-	parseRes.Body = unmar["body"]
-
-	return parseRes
 }
 
 func serveLogin(w http.ResponseWriter, req *http.Request) (interface{}, string, int) {
@@ -74,7 +56,7 @@ func serveLogin(w http.ResponseWriter, req *http.Request) (interface{}, string, 
 		return nil, "server exception", 2
 	}
 
-	apiResp := parseResponseBody(resp.Body())
+	apiResp := httpdaemon.ParseResponseBody(resp.Body())
 
 	if apiResp.Code == 0 {
 		body := apiResp.Body.(map[string]interface{})
@@ -82,10 +64,10 @@ func serveLogin(w http.ResponseWriter, req *http.Request) (interface{}, string, 
 		_ = json.Unmarshal(jsonBody, &apiResp.Body)
 	}
 
-	if apiResp.Code == 5 {
-		elog.Errorf(elog.Fields{}, "%v", apiResp.Msg)
+	if apiResp.Code != 0 {
+		elog.Errorf(elog.Fields{}, "login failed %v", apiResp.Msg)
+		apiResp.Msg = fmt.Sprintf("login failed code %v , error msg %s", apiResp.Code, apiResp.Msg)
 		apiResp.Code = 2
-		apiResp.Msg = "server exception"
 	}
 
 	return apiResp.Body, apiResp.Msg, apiResp.Code
@@ -103,8 +85,6 @@ func serveLogout(w http.ResponseWriter, req *http.Request) (interface{}, string,
 		SetQueryParam("auth_code", authCode).
 		Post(url)
 
-	fmt.Println(resp, err)
-
 	if err != nil {
 		elog.Errorf(elog.Fields{}, "require failed: %v", err)
 		return nil, "server exception", 2
@@ -117,18 +97,6 @@ func getUrl(uri string) string {
 	url := "http://" + srvs[0].IpPorts[0]
 
 	return url + uri
-}
-
-func discoverService(serviceKey string) {
-	ips, err := srvreg.Query(serviceKey)
-	if err != nil {
-		elog.Fatalf(elog.Fields{}, "discover service failed: %v", serviceKey)
-	}
-	var srvInfo SrvInfo
-	srvInfo.Domain = serviceKey
-	srvInfo.IpPorts = ips
-
-	srvs = append(srvs, srvInfo)
 }
 
 func main() {
