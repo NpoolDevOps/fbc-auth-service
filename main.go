@@ -107,13 +107,13 @@ func getUrl(uri string) string {
 
 func main() {
 	httpdaemon.RegisterRouter(httpdaemon.HttpRouter{
-		Location: "/login",
+		Location: "/api/login",
 		Handler:  serveLogin,
 		Method:   "POST",
 	})
 
 	httpdaemon.RegisterRouter(httpdaemon.HttpRouter{
-		Location: "/logout",
+		Location: "/api/logout",
 		Handler:  serveLogout,
 		Method:   "POST",
 	})
