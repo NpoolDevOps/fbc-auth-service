@@ -65,8 +65,8 @@ func serveLogin(w http.ResponseWriter, req *http.Request) (interface{}, string, 
 	}
 
 	if apiResp.Code != 0 {
-		elog.Errorf(elog.Fields{}, "login failed %v", apiResp.Msg)
 		apiResp.Msg = fmt.Sprintf("login failed code %v , error msg %s", apiResp.Code, apiResp.Msg)
+		elog.Errorf(elog.Fields{}, apiResp.Msg)
 		apiResp.Code = 2
 	}
 
@@ -89,8 +89,14 @@ func serveLogout(w http.ResponseWriter, req *http.Request) (interface{}, string,
 		elog.Errorf(elog.Fields{}, "require failed: %v", err)
 		return nil, "server exception", 2
 	}
+	apiResp := httpdaemon.ParseResponseBody(resp.Body())
+	if apiResp.Code != 0 {
+		apiResp.Msg = fmt.Sprintf("logout failed code %v, msg %v", apiResp.Code, apiResp.Msg)
+		elog.Errorf(elog.Fields{}, apiResp.Msg)
+		apiResp.Code = 3
+	}
 
-	return nil, "", 0
+	return apiResp.Body, apiResp.Msg, apiResp.Code
 }
 
 func getUrl(uri string) string {
