@@ -1,125 +1,44 @@
 package main
 
 import (
-	"encoding/json"
-	"fmt"
-	elog "github.com/EntropyPool/entropy-logger"
-	"github.com/NpoolRD/http-daemon"
-	"github.com/NpoolRD/service-register"
-	"github.com/go-resty/resty/v2"
-	"net/http"
+	log "github.com/EntropyPool/entropy-logger"
+	"github.com/urfave/cli/v2"
+	"golang.org/x/xerrors"
+	"os"
 )
 
-type SrvInfo struct {
-	Domain  string   `json:"domain"`
-	IpPorts []string `json:"ip_ports"`
-}
-
-type LoginRequest struct {
-	Username string
-	Passwd   string
-	AppId    string
-}
-
-var srvs []srvreg.SrvInfo
-var cli *resty.Client
-
-func init() {
-	srvs = srvreg.BatchQuery(MyConfig.Targets)
-	cli = resty.New()
-}
-
-func serveLogin(w http.ResponseWriter, req *http.Request) (interface{}, string, int) {
-	params := req.Form
-	if err := httpdaemon.ValidateParams([]string{"username", "passwd"}, params); err != nil {
-		return nil, err.Error(), 1
-	}
-	username := params["username"][0]
-	passwd := params["passwd"][0]
-
-	var jumpUrl = ""
-	if len(params["url"]) > 0 {
-		jumpUrl = params["url"][0]
-	}
-
-	var appId = ""
-	url := getUrl("/auth/login")
-
-	resp, err := cli.R().
-		SetQueryParam("username", username).
-		SetQueryParam("passwd", passwd).
-		SetQueryParam("appid", appId).
-		Post(url)
-
-	if err != nil {
-		elog.Errorf(elog.Fields{}, "require failed: %v", err)
-		return nil, "server exception", 2
-	}
-
-	apiResp := httpdaemon.ParseResponseBody(resp.Body())
-
-	if apiResp.Code == 0 {
-		body := apiResp.Body.(map[string]interface{})
-		jsonBody, _ := json.Marshal(map[string]string{"auth_code": body["auth_code"].(string), "url": jumpUrl})
-		_ = json.Unmarshal(jsonBody, &apiResp.Body)
-	}
-
-	if apiResp.Code != 0 {
-		apiResp.Msg = fmt.Sprintf("login failed code %v , error msg %s", apiResp.Code, apiResp.Msg)
-		elog.Errorf(elog.Fields{}, apiResp.Msg)
-		apiResp.Code = 2
-	}
-
-	return apiResp.Body, apiResp.Msg, apiResp.Code
-}
-
-func serveLogout(w http.ResponseWriter, req *http.Request) (interface{}, string, int) {
-	params := req.Form
-	if err := httpdaemon.ValidateParams([]string{"auth_code"}, params); err != nil {
-		return nil, err.Error(), 1
-	}
-	authCode := params["auth_code"][0]
-	url := getUrl("/auth/logout")
-
-	resp, err := cli.R().
-		SetQueryParam("auth_code", authCode).
-		Post(url)
-
-	if err != nil {
-		elog.Errorf(elog.Fields{}, "require failed: %v", err)
-		return nil, "server exception", 2
-	}
-	apiResp := httpdaemon.ParseResponseBody(resp.Body())
-	if apiResp.Code != 0 {
-		apiResp.Msg = fmt.Sprintf("logout failed code %v, msg %v", apiResp.Code, apiResp.Msg)
-		elog.Errorf(elog.Fields{}, apiResp.Msg)
-		apiResp.Code = 3
-	}
-
-	return apiResp.Body, apiResp.Msg, apiResp.Code
-}
-
-func getUrl(uri string) string {
-	url := "http://" + srvs[0].IpPorts[0]
-
-	return url + uri
-}
-
 func main() {
-	httpdaemon.RegisterRouter(httpdaemon.HttpRouter{
-		Location: "/api/login",
-		Handler:  serveLogin,
-		Method:   "POST",
-	})
+	app := &cli.App{
+		Name:                 "fbc-login-service",
+		Usage:                "FBC login service for user",
+		Version:              "0.1.0",
+		EnableBashCompletion: true,
+		Flags: []cli.Flag{
+			&cli.StringFlag{
+				Name:  "config",
+				Value: "./fbc-login-service.conf",
+			},
+		},
+		Action: func(cctx *cli.Context) error {
+			configFile := cctx.String("config")
+			server := NewLoginServer(configFile)
+			if server == nil {
+				return xerrors.Errorf("cannot create auth server")
+			}
+			err := server.Run()
+			if err != nil {
+				return xerrors.Errorf("fail to run auto server: %v", err)
+			}
 
-	httpdaemon.RegisterRouter(httpdaemon.HttpRouter{
-		Location: "/api/logout",
-		Handler:  serveLogout,
-		Method:   "POST",
-	})
+			ch := make(chan int)
+			<-ch
 
-	httpdaemon.Run(MyConfig.Port)
+			return nil
+		},
+	}
 
-	ch := make(chan int, 0)
-	<-ch
+	err := app.Run(os.Args)
+	if err != nil {
+		log.Fatalf(log.Fields{}, "fail to run %v: %v", app.Name, err)
+	}
 }
