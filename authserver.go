@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	log "github.com/EntropyPool/entropy-logger"
+	types "github.com/NpoolDevOps/fbc-auth-service/types"
 	authmysql "github.com/NpoolDevOps/fbc-devops-service/mysql"
 	authredis "github.com/NpoolDevOps/fbc-devops-service/redis"
 	fbclib "github.com/NpoolDevOps/fbc-license-service/library"
@@ -65,7 +66,9 @@ func NewAuthServer(configFile string) *AuthServer {
 }
 
 func (s *AuthServer) UserLoginRequest(w http.ResponseWriter, req *http.Request) (interface{}, string, int) {
-	return nil, "", 0
+	return types.UserLoginOutput{
+		AuthCode: "asdfjkjkdfjsalkjlfdaskjl",
+	}, "", 0
 }
 
 func (s *AuthServer) UserLogoutRequest(w http.ResponseWriter, req *http.Request) (interface{}, string, int) {
