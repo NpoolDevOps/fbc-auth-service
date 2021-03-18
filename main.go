@@ -16,7 +16,7 @@ func main() {
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:  "config",
-				Value: "./fbc-login-service.conf",
+				Value: "./fbc-auth-service.conf",
 			},
 		},
 		Action: func(cctx *cli.Context) error {
