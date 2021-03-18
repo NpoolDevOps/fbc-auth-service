@@ -21,7 +21,7 @@ func main() {
 		},
 		Action: func(cctx *cli.Context) error {
 			configFile := cctx.String("config")
-			server := NewLoginServer(configFile)
+			server := NewAuthServer(configFile)
 			if server == nil {
 				return xerrors.Errorf("cannot create auth server")
 			}
