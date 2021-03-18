@@ -1,4 +1,4 @@
-module github.com/NpoolRD/devops-logingateway
+module github.com/NpoolDevOps/fbc-auth-service
 
 go 1.15
 
