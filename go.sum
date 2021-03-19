@@ -1,7 +1,6 @@
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
 github.com/EntropyPool/entropy-logger v0.0.0-20210210082337-af230fd03ce7 h1:tiK8mSwRjbv+w4/TVji3hJ2hzdv5Lp7f1MsArCKv2Rw=
 github.com/EntropyPool/entropy-logger v0.0.0-20210210082337-af230fd03ce7/go.mod h1:perlDQKCtiDeoe5S/iS6VlZluvMQ6KMDb6V23ulWMV4=
-github.com/NpoolDevOps/fbc-devops-service v0.0.0-20210318090754-3e9f35202388 h1:qe/en1hS+apaP0kBrgkO28jo9vQv6t/7RpAlNB474dY=
 github.com/NpoolDevOps/fbc-devops-service v0.0.0-20210318090754-3e9f35202388/go.mod h1:cpRsY+DZ6TDTZrGCldMNcKP5u8AnIl4rbpykflkQUC8=
 github.com/NpoolDevOps/fbc-license-service v0.0.0-20210318060048-fc9b7662d874 h1:+V2/G6uEi/NGpU3Z9yntSPzB/TzLuCAhDv5rEKOd6WI=
 github.com/NpoolDevOps/fbc-license-service v0.0.0-20210318060048-fc9b7662d874/go.mod h1:TDYLYEPoO/FIqhlUczeQccA1mMNMHR6BleISvTUCTxo=
@@ -23,7 +22,6 @@ github.com/cpuguy83/go-md2man/v2 v2.0.0-20190314233015-f79a8a8ca69d/go.mod h1:ma
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/denisenkom/go-mssqldb v0.0.0-20191124224453-732737034ffd/go.mod h1:xbL0rPBG9cCiLr28tMa8zpbdarY27NDyej4t/EjAShU=
-github.com/dgrijalva/jwt-go v1.0.2 h1:KPldsxuKGsS2FPWsNeg9ZO18aCrGKujPoWXn2yo+KQM=
 github.com/dgrijalva/jwt-go v3.2.0+incompatible h1:7qlOGliEKZXTDg6OTjfoBKDXWrumCAMpl/TFQ4/5kLM=
 github.com/dgrijalva/jwt-go v3.2.0+incompatible/go.mod h1:E3ru+11k8xSBh+hMPgOLZmtrrCbhqsmaPHjLKYnJCaQ=
 github.com/envoyproxy/go-control-plane v0.9.1-0.20191026205805-5f8ba28d4473/go.mod h1:YTl/9mNaCwkRvm6d1a2C3ymFceY/DCBVvsKhRF0iEA4=
@@ -85,7 +83,6 @@ github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+
 github.com/stretchr/testify v1.2.2/go.mod h1:a8OnRcib4nhh0OaRAV+Yts87kKdq0PP7pXfy6kDkUVs=
 github.com/stretchr/testify v1.3.0/go.mod h1:M5WIy9Dh21IEIfnGCwXGc5bZfKNJtfHm1UVUgZn+9EI=
 github.com/stretchr/testify v1.4.0/go.mod h1:j7eGeouHqKxXV5pUuKE4zz7dFj8WfuZ+81PSLYec5m4=
-github.com/urfave/cli v1.22.5 h1:lNq9sAHXK2qfdI8W+GRItjCEkI+2oR4d+MEHy1CKXoU=
 github.com/urfave/cli/v2 v2.3.0 h1:qph92Y649prgesehzOrQjdWyxFOp/QVM+6imKHad91M=
 github.com/urfave/cli/v2 v2.3.0/go.mod h1:LJmUH05zAU44vOAcrfzZQKsZbVcdbOG8rtL3/XcUArI=
 github.com/yuin/goldmark v1.1.27/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=
