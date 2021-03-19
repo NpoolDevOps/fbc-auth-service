@@ -2,17 +2,46 @@ package authapi
 
 import (
 	"encoding/json"
+	"fmt"
 	log "github.com/EntropyPool/entropy-logger"
 	types "github.com/NpoolDevOps/fbc-auth-service/types"
+	etcdcli "github.com/NpoolDevOps/fbc-license-service/etcdcli"
 	httpdaemon "github.com/NpoolRD/http-daemon"
 	"golang.org/x/xerrors"
 )
 
+const authDomain = "auth.npool.com"
+
+type authHostConfig struct {
+	Host string `json:"host"`
+}
+
+func getAuthHost() (string, error) {
+	var myConfig authHostConfig
+
+	resp, err := etcdcli.Get(authDomain)
+	if err != nil {
+		return "", err
+	}
+
+	err = json.Unmarshal(resp[0], &myConfig)
+	if err == nil {
+		return "", err
+	}
+
+	return myConfig.Host, err
+}
+
 func Login(input types.UserLoginInput) (*types.UserLoginOutput, error) {
+	host, err := getAuthHost()
+	if err != nil {
+		return nil, err
+	}
+
 	resp, err := httpdaemon.R().
 		SetHeader("Content-Type", "application/json").
 		SetBody(input).
-		Post(types.UserLoginAPI)
+		Post(fmt.Sprintf("http://%v/%v", host, types.UserLoginAPI))
 	if err != nil {
 		log.Errorf(log.Fields{}, "heartbeat error: %v", err)
 		return nil, err
