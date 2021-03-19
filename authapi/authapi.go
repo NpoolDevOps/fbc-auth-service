@@ -21,11 +21,13 @@ func getAuthHost() (string, error) {
 
 	resp, err := etcdcli.Get(authDomain)
 	if err != nil {
+		log.Errorf(log.Fields{}, "cannot get %v: %v", authDomain, err)
 		return "", err
 	}
 
-	err = json.Unmarshal(resp[0], &myConfig)
-	if err == nil {
+	err = json.Unmarshal([]byte(resp[0]), &myConfig)
+	if err != nil {
+		log.Errorf(log.Fields{}, "cannot parse %v: %v", string(resp[0]), err)
 		return "", err
 	}
 
@@ -39,12 +41,12 @@ func Login(input types.UserLoginInput) (*types.UserLoginOutput, error) {
 		return nil, err
 	}
 
-	log.Infof(log.Fields{}, "req to http://%v/%v", host, types.UserLoginAPI)
+	log.Infof(log.Fields{}, "req to http://%v%v", host, types.UserLoginAPI)
 
 	resp, err := httpdaemon.R().
 		SetHeader("Content-Type", "application/json").
 		SetBody(input).
-		Post(fmt.Sprintf("http://%v/%v", host, types.UserLoginAPI))
+		Post(fmt.Sprintf("http://%v%v", host, types.UserLoginAPI))
 	if err != nil {
 		log.Errorf(log.Fields{}, "heartbeat error: %v", err)
 		return nil, err
