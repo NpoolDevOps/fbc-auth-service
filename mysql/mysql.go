@@ -1,4 +1,4 @@
-package fbcmysql
+package authmysql
 
 import (
 	"encoding/json"
@@ -9,7 +9,6 @@ import (
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
 	"golang.org/x/xerrors"
-	"time"
 )
 
 type MysqlConfig struct {
@@ -63,4 +62,42 @@ func NewMysqlCli(config MysqlConfig) *MysqlCli {
 
 func (cli *MysqlCli) Delete() {
 	cli.db.Close()
+}
+
+type AuthUser struct {
+	Id       uuid.UUID `gorm:"column:id"`
+	Username string    `gorm:"column:username"`
+	Passwd   string    `gorm:"column:passwd"`
+}
+
+func (cli *MysqlCli) QueryUserWithPassword(username string, passwd string) (*AuthUser, error) {
+	user := AuthUser{}
+
+	var count int
+
+	cli.db.Where("username = ?", username).Find(&user).Count(&count)
+	if count == 0 {
+		return nil, xerrors.Errorf("user is not registered")
+	}
+
+	if user.Passwd != passwd {
+		return nil, xerrors.Errorf("password is mismatched")
+	}
+
+	return &user, nil
+}
+
+func (cli *MysqlCli) QueryAuthUser(username string) (*AuthUser, error) {
+	user := AuthUser{}
+
+	var count int
+
+	cli.db.Where("username = ?", username).Find(&user).Count(&count)
+	if count == 0 {
+		return nil, xerrors.Errorf("user is not registered")
+	}
+
+	user.Passwd = ""
+
+	return &user, nil
 }

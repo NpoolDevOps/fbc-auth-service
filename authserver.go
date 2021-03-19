@@ -3,13 +3,16 @@ package main
 import (
 	"encoding/json"
 	log "github.com/EntropyPool/entropy-logger"
+	authmysql "github.com/NpoolDevOps/fbc-auth-service/mysql"
+	authredis "github.com/NpoolDevOps/fbc-auth-service/redis"
 	types "github.com/NpoolDevOps/fbc-auth-service/types"
-	authmysql "github.com/NpoolDevOps/fbc-devops-service/mysql"
-	authredis "github.com/NpoolDevOps/fbc-devops-service/redis"
 	fbclib "github.com/NpoolDevOps/fbc-license-service/library"
 	"github.com/NpoolRD/http-daemon"
+	jwt "github.com/dgrijalva/jwt-go"
+	"github.com/google/uuid"
 	"io/ioutil"
 	"net/http"
+	"time"
 )
 
 type AuthConfig struct {
@@ -66,9 +69,51 @@ func NewAuthServer(configFile string) *AuthServer {
 }
 
 func (s *AuthServer) UserLoginRequest(w http.ResponseWriter, req *http.Request) (interface{}, string, int) {
-	return types.UserLoginOutput{
-		AuthCode: "asdfjkjkdfjsalkjlfdaskjl",
-	}, "", 0
+	b, err := ioutil.ReadAll(req.Body)
+	if err != nil {
+		return nil, err.Error(), -1
+	}
+
+	input := types.UserLoginInput{}
+	err = json.Unmarshal(b, &input)
+	if err != nil {
+		return nil, err.Error(), -2
+	}
+
+	user, err := s.mysqlClient.QueryUserWithPassword(input.Username, input.Password)
+	if err != nil {
+		return nil, err.Error(), -3
+	}
+
+	output := types.UserLoginOutput{}
+	type MyClaims struct {
+		Username string
+		UserId   uuid.UUID
+		jwt.StandardClaims
+	}
+
+	userInfo, err := s.redisClient.QueryUserInfo(user.Id)
+	if err != nil {
+		token := jwt.NewWithClaims(jwt.SigningMethodHS256, MyClaims{
+			Username: input.Username,
+			UserId:   user.Id,
+			StandardClaims: jwt.StandardClaims{
+				ExpiresAt: time.Now().Add(24 * time.Hour).Unix(),
+			},
+		})
+		output.AuthCode, err = token.SignedString([]byte("asdfjkjkdfjsalkjlfdaskjl"))
+		if err != nil {
+			return nil, err.Error(), -4
+		}
+
+		s.redisClient.InsertKeyInfo("user", user.Id, authredis.UserInfo{
+			AuthCode: output.AuthCode,
+		}, 24*time.Hour)
+	} else {
+		output.AuthCode = userInfo.AuthCode
+	}
+
+	return output, "", 0
 }
 
 func (s *AuthServer) UserLogoutRequest(w http.ResponseWriter, req *http.Request) (interface{}, string, int) {

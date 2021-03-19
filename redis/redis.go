@@ -1,4 +1,4 @@
-package fbcredis
+package authredis
 
 import (
 	"encoding/json"
@@ -61,3 +61,33 @@ func NewRedisCli(config RedisConfig) *RedisCli {
 }
 
 var redisKeyPrefix = "fbc:userauth:server:"
+
+type UserInfo struct {
+	AuthCode string `json:"auth_code"`
+}
+
+func (cli *RedisCli) InsertKeyInfo(keyWord string, id uuid.UUID, info interface{}, ttl time.Duration) error {
+	b, err := json.Marshal(info)
+	if err != nil {
+		return err
+	}
+	err = cli.client.Set(fmt.Sprintf("%v:%v:%v", redisKeyPrefix, keyWord, id),
+		string(b), ttl*time.Second).Err()
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (cli *RedisCli) QueryUserInfo(uid uuid.UUID) (*UserInfo, error) {
+	val, err := cli.client.Get(fmt.Sprintf("%v:user:%v", redisKeyPrefix, uid)).Result()
+	if err != nil {
+		return nil, err
+	}
+	info := &UserInfo{}
+	err = json.Unmarshal([]byte(val), info)
+	if err != nil {
+		return nil, err
+	}
+	return info, nil
+}
