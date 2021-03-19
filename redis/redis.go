@@ -6,7 +6,6 @@ import (
 	log "github.com/EntropyPool/entropy-logger"
 	etcdcli "github.com/NpoolDevOps/fbc-license-service/etcdcli"
 	"github.com/go-redis/redis"
-	"github.com/google/uuid"
 	"time"
 )
 
@@ -66,21 +65,25 @@ type UserInfo struct {
 	AuthCode string `json:"auth_code"`
 }
 
-func (cli *RedisCli) InsertKeyInfo(keyWord string, id uuid.UUID, info interface{}, ttl time.Duration) error {
+func (cli *RedisCli) InsertKeyInfo(keyWord string, id string, info interface{}, ttl time.Duration) error {
 	b, err := json.Marshal(info)
 	if err != nil {
 		return err
 	}
-	err = cli.client.Set(fmt.Sprintf("%v:%v:%v", redisKeyPrefix, keyWord, id),
-		string(b), ttl*time.Second).Err()
+
+	key := fmt.Sprintf("%v:%v:%v", redisKeyPrefix, keyWord, id)
+	val := string(b)
+	log.Infof(log.Fields{}, "redis %v -> %v", key, val)
+
+	err = cli.client.Set(key, val, ttl).Err()
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (cli *RedisCli) QueryUserInfo(uid uuid.UUID) (*UserInfo, error) {
-	val, err := cli.client.Get(fmt.Sprintf("%v:user:%v", redisKeyPrefix, uid)).Result()
+func (cli *RedisCli) QueryUserInfo(userKey string) (*UserInfo, error) {
+	val, err := cli.client.Get(fmt.Sprintf("%v:user:%v", redisKeyPrefix, userKey)).Result()
 	if err != nil {
 		return nil, err
 	}

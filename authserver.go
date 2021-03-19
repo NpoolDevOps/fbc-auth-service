@@ -1,7 +1,10 @@
 package main
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	log "github.com/EntropyPool/entropy-logger"
 	authmysql "github.com/NpoolDevOps/fbc-auth-service/mysql"
 	authredis "github.com/NpoolDevOps/fbc-auth-service/redis"
@@ -92,7 +95,9 @@ func (s *AuthServer) UserLoginRequest(w http.ResponseWriter, req *http.Request) 
 		jwt.StandardClaims
 	}
 
-	userInfo, err := s.redisClient.QueryUserInfo(user.Id)
+	userKey := fmt.Sprintf("%v:%v", user.Id, input.AppId)
+
+	userInfo, err := s.redisClient.QueryUserInfo(userKey)
 	if err != nil {
 		token := jwt.NewWithClaims(jwt.SigningMethodHS256, MyClaims{
 			Username: input.Username,
@@ -101,14 +106,18 @@ func (s *AuthServer) UserLoginRequest(w http.ResponseWriter, req *http.Request) 
 				ExpiresAt: time.Now().Add(24 * time.Hour).Unix(),
 			},
 		})
-		output.AuthCode, err = token.SignedString([]byte("asdfjkjkdfjsalkjlfdaskjl"))
+		tokenStr, err := token.SignedString([]byte("asdfjkjkdfjsalkjlfdaskjl"))
 		if err != nil {
 			return nil, err.Error(), -4
 		}
 
-		s.redisClient.InsertKeyInfo("user", user.Id, authredis.UserInfo{
-			AuthCode: output.AuthCode,
+		authCode := sha256.Sum256([]byte(tokenStr))
+		s.redisClient.InsertKeyInfo("user", userKey, authredis.UserInfo{
+			AuthCode: hex.EncodeToString(authCode[0:]),
 		}, 24*time.Hour)
+
+		input.Password = ""
+		s.redisClient.InsertKeyInfo("authcode", hex.EncodeToString(authCode[0:]), input, 24*time.Hour)
 	} else {
 		output.AuthCode = userInfo.AuthCode
 	}
