@@ -35,6 +35,7 @@ func getAuthHost() (string, error) {
 func Login(input types.UserLoginInput) (*types.UserLoginOutput, error) {
 	host, err := getAuthHost()
 	if err != nil {
+		log.Errorf(log.Fields{}, "fail to get %v from etcd: %v", authDomain, err)
 		return nil, err
 	}
 
