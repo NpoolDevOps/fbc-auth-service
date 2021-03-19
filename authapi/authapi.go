@@ -10,7 +10,7 @@ import (
 	"golang.org/x/xerrors"
 )
 
-const authDomain = "auth.npool.com"
+const authDomain = "auth.npool.top"
 
 type authHostConfig struct {
 	Host string `json:"host"`
