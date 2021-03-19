@@ -38,7 +38,7 @@ func Login(input types.UserLoginInput) (*types.UserLoginOutput, error) {
 		return nil, err
 	}
 
-	log.Infof("req to http://%v/%v", host, types.UserLoginAPI)
+	log.Infof(log.Fields{}, "req to http://%v/%v", host, types.UserLoginAPI)
 
 	resp, err := httpdaemon.R().
 		SetHeader("Content-Type", "application/json").
