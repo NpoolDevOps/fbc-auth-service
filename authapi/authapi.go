@@ -62,7 +62,8 @@ func Login(input types.UserLoginInput) (*types.UserLoginOutput, error) {
 	}
 
 	output := types.UserLoginOutput{}
-	err = json.Unmarshal([]byte(apiResp.Body.(string)), &output)
+	b, _ := json.Marshal(apiResp.Body)
+	err = json.Unmarshal(b, &output)
 
 	return &output, err
 }
