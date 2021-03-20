@@ -6,6 +6,7 @@ import (
 	log "github.com/EntropyPool/entropy-logger"
 	etcdcli "github.com/NpoolDevOps/fbc-license-service/etcdcli"
 	"github.com/go-redis/redis"
+	"golang.org/x/xerrors"
 	"time"
 )
 
@@ -91,6 +92,9 @@ func (cli *RedisCli) QueryUserInfo(userKey string) (*UserInfo, error) {
 	err = json.Unmarshal([]byte(val), info)
 	if err != nil {
 		return nil, err
+	}
+	if info.AuthCode == "" {
+		return nil, xerrors.Errorf("invalid auth code")
 	}
 	return info, nil
 }

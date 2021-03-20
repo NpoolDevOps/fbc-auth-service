@@ -112,12 +112,15 @@ func (s *AuthServer) UserLoginRequest(w http.ResponseWriter, req *http.Request) 
 		}
 
 		authCode := sha256.Sum256([]byte(tokenStr))
+		authCodeStr := hex.EncodeToString(authCode[0:])
+
 		s.redisClient.InsertKeyInfo("user", userKey, authredis.UserInfo{
-			AuthCode: hex.EncodeToString(authCode[0:]),
+			AuthCode: authCodeStr,
 		}, 24*time.Hour)
 
 		input.Password = ""
 		s.redisClient.InsertKeyInfo("authcode", hex.EncodeToString(authCode[0:]), input, 24*time.Hour)
+		output.AuthCode = authCodeStr
 	} else {
 		output.AuthCode = userInfo.AuthCode
 	}
