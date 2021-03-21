@@ -1,6 +1,9 @@
 package authmysql
 
 import (
+	"crypto/hmac"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	log "github.com/EntropyPool/entropy-logger"
@@ -68,6 +71,14 @@ type AuthUser struct {
 	Id       uuid.UUID `gorm:"column:id"`
 	Username string    `gorm:"column:username"`
 	Passwd   string    `gorm:"column:passwd"`
+	Salt     string    `gorm:"column:salt"`
+}
+
+func (cli *MysqlCli) saltedPassword(password string, salt string) string {
+	mac := hmac.New(sha256.New, []byte(salt))
+	mac.Write([]byte(password))
+	sum := mac.Sum(nil)
+	return hex.EncodeToString(sum[0:])[0:12]
 }
 
 func (cli *MysqlCli) QueryUserWithPassword(username string, passwd string) (*AuthUser, error) {
@@ -80,7 +91,12 @@ func (cli *MysqlCli) QueryUserWithPassword(username string, passwd string) (*Aut
 		return nil, xerrors.Errorf("user is not registered")
 	}
 
-	if user.Passwd != passwd {
+	inputPasswd := passwd
+	if user.Salt != "0" {
+		inputPasswd = cli.saltedPassword(passwd, user.Salt)
+	}
+
+	if user.Passwd != inputPasswd {
 		return nil, xerrors.Errorf("password is mismatched")
 	}
 
