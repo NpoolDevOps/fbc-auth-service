@@ -83,9 +83,18 @@ func (s *AuthServer) UserLoginRequest(w http.ResponseWriter, req *http.Request) 
 		return nil, err.Error(), -2
 	}
 
-	user, err := s.mysqlClient.QueryUserWithPassword(input.Username, input.Password)
+	appId, err := s.mysqlClient.QueryAppId(input.AppId)
 	if err != nil {
 		return nil, err.Error(), -3
+	}
+
+	user, err := s.mysqlClient.QueryUserWithPassword(input.Username, input.Password)
+	if err != nil {
+		return nil, err.Error(), -4
+	}
+
+	if user.Id != appId.UserId {
+		return nil, "app id is not belong to user id", -5
 	}
 
 	output := types.UserLoginOutput{}
@@ -108,7 +117,7 @@ func (s *AuthServer) UserLoginRequest(w http.ResponseWriter, req *http.Request) 
 		})
 		tokenStr, err := token.SignedString([]byte("asdfjkjkdfjsalkjlfdaskjl"))
 		if err != nil {
-			return nil, err.Error(), -4
+			return nil, err.Error(), -6
 		}
 
 		authCode := sha256.Sum256([]byte(tokenStr))

@@ -117,3 +117,20 @@ func (cli *MysqlCli) QueryAuthUser(username string) (*AuthUser, error) {
 
 	return &user, nil
 }
+
+type AppId struct {
+	Id     uuid.UUID `gorm:"column:id"`
+	UserId uuid.UUID `gorm:"column:user_id"`
+}
+
+func (cli *MysqlCli) QueryAppId(id uuid.UUID) (*AppId, error) {
+	appId := AppId{}
+	var count int
+
+	cli.db.Where("id = ?", id).Find(&appId).Count(&count)
+	if count == 0 {
+		return nil, xerrors.Errorf("app id is not registered")
+	}
+
+	return &appId, nil
+}
