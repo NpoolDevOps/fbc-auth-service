@@ -15,7 +15,7 @@ func TestLogin(t *testing.T) {
 }
 
 func TestCheckSuperUser(t *testing.T) {
-	CheckSuperUser(types.CheckSuperUserInput{
+	UserInfo(types.UserInfoInput{
 		AuthCode: "9a084e991104f774f1a8e56c30af6f4abd9696c24757835e0d5c4991ba122f8c",
 	})
 }

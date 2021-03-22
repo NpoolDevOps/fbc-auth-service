@@ -68,19 +68,19 @@ func Login(input types.UserLoginInput) (*types.UserLoginOutput, error) {
 	return &output, err
 }
 
-func CheckSuperUser(input types.CheckSuperUserInput) (*types.CheckSuperUserOutput, error) {
+func UserInfo(input types.UserInfoInput) (*types.UserInfoOutput, error) {
 	host, err := getAuthHost()
 	if err != nil {
 		log.Errorf(log.Fields{}, "fail to get %v from etcd: %v", authDomain, err)
 		return nil, err
 	}
 
-	log.Infof(log.Fields{}, "req to http://%v%v", host, types.CheckSuperUserAPI)
+	log.Infof(log.Fields{}, "req to http://%v%v", host, types.UserInfoAPI)
 
 	resp, err := httpdaemon.R().
 		SetHeader("Content-Type", "application/json").
 		SetBody(input).
-		Post(fmt.Sprintf("http://%v%v", host, types.CheckSuperUserAPI))
+		Post(fmt.Sprintf("http://%v%v", host, types.UserInfoAPI))
 	if err != nil {
 		log.Errorf(log.Fields{}, "heartbeat error: %v", err)
 		return nil, err
@@ -95,7 +95,7 @@ func CheckSuperUser(input types.CheckSuperUserInput) (*types.CheckSuperUserOutpu
 		return nil, err
 	}
 
-	output := types.CheckSuperUserOutput{}
+	output := types.UserInfoOutput{}
 	b, _ := json.Marshal(apiResp.Body)
 	err = json.Unmarshal(b, &output)
 

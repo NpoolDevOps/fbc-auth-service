@@ -140,13 +140,13 @@ func (s *AuthServer) UserLogoutRequest(w http.ResponseWriter, req *http.Request)
 	return nil, "", 0
 }
 
-func (s *AuthServer) CheckSuperUserRequest(w http.ResponseWriter, req *http.Request) (interface{}, string, int) {
+func (s *AuthServer) UserInfoRequest(w http.ResponseWriter, req *http.Request) (interface{}, string, int) {
 	b, err := ioutil.ReadAll(req.Body)
 	if err != nil {
 		return nil, err.Error(), -1
 	}
 
-	input := types.CheckSuperUserInput{}
+	input := types.UserInfoInput{}
 	err = json.Unmarshal(b, &input)
 	if err != nil {
 		return nil, err.Error(), -2
@@ -166,12 +166,19 @@ func (s *AuthServer) CheckSuperUserRequest(w http.ResponseWriter, req *http.Requ
 		return nil, err.Error(), -5
 	}
 
-	super, err := s.mysqlClient.QuerySuperUser(user.Id)
-	if err != nil {
-		return nil, err.Error(), -6
+	userInfo := types.UserInfoOutput{
+		Id:          user.Id,
+		VisitorOnly: true,
+		SuperUser:   false,
 	}
 
-	return super, "", 0
+	super, err := s.mysqlClient.QuerySuperUser(user.Id)
+	if err == nil {
+		userInfo.VisitorOnly = super.Visitor
+		userInfo.SuperUser = true
+	}
+
+	return userInfo, "", 0
 }
 
 func (s *AuthServer) Run() error {
@@ -188,8 +195,8 @@ func (s *AuthServer) Run() error {
 	})
 
 	httpdaemon.RegisterRouter(httpdaemon.HttpRouter{
-		Location: types.CheckSuperUserAPI,
-		Handler:  s.CheckSuperUserRequest,
+		Location: types.UserInfoAPI,
+		Handler:  s.UserInfoRequest,
 		Method:   "POST",
 	})
 
