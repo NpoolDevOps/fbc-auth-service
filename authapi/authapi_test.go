@@ -9,7 +9,7 @@ import (
 func TestLogin(t *testing.T) {
 	Login(types.UserLoginInput{
 		Username: "entropypool",
-		Password: "7d1721d7acef",
+		Password: "b759803bc603",
 		AppId:    uuid.MustParse("00000000-0000-0000-0000-000000000000"),
 	})
 }
