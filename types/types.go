@@ -13,3 +13,12 @@ type UserLoginInput struct {
 type UserLoginOutput struct {
 	AuthCode string `json:"auth_code"`
 }
+
+type CheckSuperUserInput struct {
+	AuthCode string `json:"auth_code"`
+}
+
+type CheckSuperUserOutput struct {
+	Id          uuid.UUID `json:"user_id"`
+	VisitorOnly bool      `json:"visitor_only"`
+}

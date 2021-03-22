@@ -127,8 +127,7 @@ func (s *AuthServer) UserLoginRequest(w http.ResponseWriter, req *http.Request) 
 			AuthCode: authCodeStr,
 		}, 24*time.Hour)
 
-		input.Password = ""
-		s.redisClient.InsertKeyInfo("authcode", hex.EncodeToString(authCode[0:]), input, 24*time.Hour)
+		s.redisClient.InsertKeyInfo("authcode", hex.EncodeToString(authCode[0:]), user, 24*time.Hour)
 		output.AuthCode = authCodeStr
 	} else {
 		output.AuthCode = userInfo.AuthCode
@@ -141,16 +140,56 @@ func (s *AuthServer) UserLogoutRequest(w http.ResponseWriter, req *http.Request)
 	return nil, "", 0
 }
 
+func (s *AuthServer) CheckSuperUserRequest(w http.ResponseWriter, req *http.Request) (interface{}, string, int) {
+	b, err := ioutil.ReadAll(req.Body)
+	if err != nil {
+		return nil, err.Error(), -1
+	}
+
+	input := types.CheckSuperUserInput{}
+	err = json.Unmarshal(b, &input)
+	if err != nil {
+		return nil, err.Error(), -2
+	}
+
+	if input.AuthCode == "" {
+		return nil, "auth code is must", -3
+	}
+
+	info, err := s.redisClient.QueryAuthInfo(input.AuthCode)
+	if err != nil {
+		return nil, err.Error(), -4
+	}
+
+	user, err := s.mysqlClient.QueryAuthUser(info.Username)
+	if err != nil {
+		return nil, err.Error(), -5
+	}
+
+	super, err := s.mysqlClient.QuerySuperUser(user.Id)
+	if err != nil {
+		return nil, err.Error(), -6
+	}
+
+	return super, "", 0
+}
+
 func (s *AuthServer) Run() error {
 	httpdaemon.RegisterRouter(httpdaemon.HttpRouter{
-		Location: "/api/v0/user/login",
+		Location: types.UserLoginAPI,
 		Handler:  s.UserLoginRequest,
 		Method:   "POST",
 	})
 
 	httpdaemon.RegisterRouter(httpdaemon.HttpRouter{
-		Location: "/api/v0/user/logout",
+		Location: types.UserLogoutAPI,
 		Handler:  s.UserLogoutRequest,
+		Method:   "POST",
+	})
+
+	httpdaemon.RegisterRouter(httpdaemon.HttpRouter{
+		Location: types.CheckSuperUserAPI,
+		Handler:  s.CheckSuperUserRequest,
 		Method:   "POST",
 	})
 

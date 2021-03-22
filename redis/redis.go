@@ -6,6 +6,7 @@ import (
 	log "github.com/EntropyPool/entropy-logger"
 	etcdcli "github.com/NpoolDevOps/fbc-license-service/etcdcli"
 	"github.com/go-redis/redis"
+	"github.com/google/uuid"
 	"golang.org/x/xerrors"
 	"time"
 )
@@ -95,6 +96,24 @@ func (cli *RedisCli) QueryUserInfo(userKey string) (*UserInfo, error) {
 	}
 	if info.AuthCode == "" {
 		return nil, xerrors.Errorf("invalid auth code")
+	}
+	return info, nil
+}
+
+type AuthInfo struct {
+	Username string    `json:"username"`
+	AppId    uuid.UUID `json:"app_id"`
+}
+
+func (cli *RedisCli) QueryAuthInfo(authCode string) (*AuthInfo, error) {
+	val, err := cli.client.Get(fmt.Sprintf("%v:authcode:%v", redisKeyPrefix, authCode)).Result()
+	if err != nil {
+		return nil, err
+	}
+	info := &AuthInfo{}
+	err = json.Unmarshal([]byte(val), info)
+	if err != nil {
+		return nil, err
 	}
 	return info, nil
 }

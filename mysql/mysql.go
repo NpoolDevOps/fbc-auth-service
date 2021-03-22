@@ -134,3 +134,20 @@ func (cli *MysqlCli) QueryAppId(id uuid.UUID) (*AppId, error) {
 
 	return &appId, nil
 }
+
+type SuperUser struct {
+	Id      uuid.UUID `gorm:"column:id"`
+	Visitor bool      `gorm:"column:visitor"`
+}
+
+func (cli *MysqlCli) QuerySuperUser(id uuid.UUID) (*SuperUser, error) {
+	superUser := SuperUser{}
+	var count int
+
+	cli.db.Where("id = ?", id).Find(&superUser).Count(&count)
+	if count == 0 {
+		return nil, xerrors.Errorf("user is not super user")
+	}
+
+	return &superUser, nil
+}
