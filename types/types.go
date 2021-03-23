@@ -47,7 +47,12 @@ type UserListOutput struct {
 	Users []string `json:"users"`
 }
 
-type CheckUserInput struct {
+type UsernameInfoInput struct {
 	AuthCode string `json:"auth_code"`
 	Username string `json:"username"`
+}
+
+type UsernameInfoOutput struct {
+	Id       uuid.UUID `json:"id"`
+	Username string    `json:"username"`
 }

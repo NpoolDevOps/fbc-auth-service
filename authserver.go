@@ -323,13 +323,13 @@ func (s *AuthServer) UserListRequest(w http.ResponseWriter, req *http.Request) (
 	return types.UserListOutput{Users: users}, "", 0
 }
 
-func (s *AuthServer) CheckUserRequest(w http.ResponseWriter, req *http.Request) (interface{}, string, int) {
+func (s *AuthServer) UsernameInfoRequest(w http.ResponseWriter, req *http.Request) (interface{}, string, int) {
 	b, err := ioutil.ReadAll(req.Body)
 	if err != nil {
 		return nil, err.Error(), -1
 	}
 
-	input := types.CheckUserInput{}
+	input := types.UsernameInfoInput{}
 	err = json.Unmarshal(b, &input)
 	if err != nil {
 		return nil, err.Error(), -2
@@ -354,12 +354,15 @@ func (s *AuthServer) CheckUserRequest(w http.ResponseWriter, req *http.Request) 
 		return nil, err.Error(), -9
 	}
 
-	_, err = s.mysqlClient.QueryAuthUser(input.Username)
+	checkedUser, err := s.mysqlClient.QueryAuthUser(input.Username)
 	if err != nil {
 		return nil, err.Error(), -10
 	}
 
-	return nil, "", 0
+	return types.UsernameInfoOutput{
+		Id:       checkedUser.Id,
+		Username: checkedUser.Username,
+	}, "", 0
 }
 
 func (s *AuthServer) Run() error {
@@ -400,8 +403,8 @@ func (s *AuthServer) Run() error {
 	})
 
 	httpdaemon.RegisterRouter(httpdaemon.HttpRouter{
-		Location: types.CheckUserAPI,
-		Handler:  s.CheckUserRequest,
+		Location: types.UsernameInfoAPI,
+		Handler:  s.UsernameInfoRequest,
 		Method:   "POST",
 	})
 

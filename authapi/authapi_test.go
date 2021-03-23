@@ -20,8 +20,8 @@ func TestCheckSuperUser(t *testing.T) {
 	})
 }
 
-func TestCheckUser(t *testing.T) {
-	CheckUser(types.CheckUserInput{
+func TestUsernameInfo(t *testing.T) {
+	UsernameInfo(types.UsernameInfoInput{
 		AuthCode: "9a084e991104f774f1a8e56c30af6f4abd9696c24757835e0d5c4991ba122f8c",
 		Username: "entropytest",
 	})
