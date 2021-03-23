@@ -5,9 +5,10 @@ import (
 )
 
 type UserLoginInput struct {
-	Username string    `json:"username"`
-	Password string    `json:"password"`
-	AppId    uuid.UUID `json:"appid"`
+	Username  string    `json:"username"`
+	Password  string    `json:"password"`
+	AppId     uuid.UUID `json:"appid"`
+	TargetUrl string    `json:"target_url"`
 }
 
 type UserLoginOutput struct {

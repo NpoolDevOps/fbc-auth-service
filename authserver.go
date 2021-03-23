@@ -82,14 +82,6 @@ func (s *AuthServer) UserLoginRequest(w http.ResponseWriter, req *http.Request) 
 		return nil, err.Error(), -2
 	}
 
-	hasTarget := false
-	targetUrl := ""
-
-	if url, ok := req.Form["target"]; ok {
-		hasTarget = true
-		targetUrl = url[0]
-	}
-
 	input := types.UserLoginInput{}
 	err = json.Unmarshal(b, &input)
 	if err != nil {
@@ -146,9 +138,7 @@ func (s *AuthServer) UserLoginRequest(w http.ResponseWriter, req *http.Request) 
 		output.AuthCode = userInfo.AuthCode
 	}
 
-	if hasTarget {
-		output.TargetUrl = targetUrl
-	}
+	output.TargetUrl = input.TargetUrl
 
 	return output, "", 0
 }
