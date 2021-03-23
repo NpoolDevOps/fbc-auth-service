@@ -83,10 +83,12 @@ func (s *AuthServer) UserLoginRequest(w http.ResponseWriter, req *http.Request) 
 		return nil, err.Error(), -2
 	}
 
-	appId, err := s.mysqlClient.QueryAppId(input.AppId)
-	if err != nil {
-		return nil, err.Error(), -3
-	}
+	/*
+		appId, err := s.mysqlClient.QueryAppId(input.AppId)
+		if err != nil {
+			return nil, err.Error(), -3
+		}
+	*/
 
 	user, err := s.mysqlClient.QueryUserWithPassword(input.Username, input.Password)
 	if err != nil {
