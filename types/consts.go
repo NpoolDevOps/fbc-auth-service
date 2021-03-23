@@ -6,5 +6,6 @@ const (
 	UserInfoAPI       = "/api/v0/user/info"
 	ModifyPasswordAPI = "/api/v0/user/modifypwd"
 	CreateUserAPI     = "/api/v0/user/create"
+	CheckUserAPI      = "/api/v0/user/exist"
 	UserListAPI       = "/api/v0/user/list"
 )

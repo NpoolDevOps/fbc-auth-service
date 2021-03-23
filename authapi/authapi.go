@@ -101,3 +101,33 @@ func UserInfo(input types.UserInfoInput) (*types.UserInfoOutput, error) {
 
 	return &output, err
 }
+
+func CheckUser(info types.CheckUserInput) (bool, error) {
+	host, err := getAuthHost()
+	if err != nil {
+		log.Errorf(log.Fields{}, "fail to get %v from etcd: %v", authDomain, err)
+		return false, err
+	}
+
+	log.Infof(log.Fields{}, "req to http://%v%v", host, types.CheckUserAPI)
+
+	resp, err := httpdaemon.R().
+		SetHeader("Content-Type", "application/json").
+		SetBody(input).
+		Post(fmt.Sprintf("http://%v%v", host, types.CheckUserAPI))
+	if err != nil {
+		log.Errorf(log.Fields{}, "heartbeat error: %v", err)
+		return false, err
+	}
+
+	if resp.StatusCode() != 200 {
+		return false, xerrors.Errorf("NON-200 return")
+	}
+
+	apiResp, err := httpdaemon.ParseResponse(resp)
+	if err != nil {
+		return false, err
+	}
+
+	return true, err
+}

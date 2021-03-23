@@ -46,3 +46,8 @@ type UserListInput struct {
 type UserListOutput struct {
 	Users []string `json:"users"`
 }
+
+type CheckUserInput struct {
+	AuthCode string `json:"auth_code"`
+	Username string `json:"username"`
+}
