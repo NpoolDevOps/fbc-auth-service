@@ -32,3 +32,9 @@ type ModifyPasswordInput struct {
 	OldPassword string `json:"old_password"`
 	NewPassword string `json:"new_password"`
 }
+
+type CreateUserInput struct {
+	AuthCode string `json:"auth_code"`
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
