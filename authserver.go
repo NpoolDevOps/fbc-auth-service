@@ -77,25 +77,20 @@ func (s *AuthServer) UserLoginRequest(w http.ResponseWriter, req *http.Request) 
 		return nil, err.Error(), -1
 	}
 
-	err = req.ParseForm()
+	input := types.UserLoginInput{}
+	err = json.Unmarshal(b, &input)
 	if err != nil {
 		return nil, err.Error(), -2
 	}
 
-	input := types.UserLoginInput{}
-	err = json.Unmarshal(b, &input)
+	appId, err := s.mysqlClient.QueryAppId(input.AppId)
 	if err != nil {
 		return nil, err.Error(), -3
 	}
 
-	appId, err := s.mysqlClient.QueryAppId(input.AppId)
-	if err != nil {
-		return nil, err.Error(), -4
-	}
-
 	user, err := s.mysqlClient.QueryUserWithPassword(input.Username, input.Password)
 	if err != nil {
-		return nil, err.Error(), -5
+		return nil, err.Error(), -4
 	}
 
 	if user.Id != appId.UserId {
@@ -175,6 +170,7 @@ func (s *AuthServer) UserInfoRequest(w http.ResponseWriter, req *http.Request) (
 
 	userInfo := types.UserInfoOutput{
 		Id:          user.Id,
+		Username:    info.Username,
 		VisitorOnly: true,
 		SuperUser:   false,
 	}
@@ -186,6 +182,49 @@ func (s *AuthServer) UserInfoRequest(w http.ResponseWriter, req *http.Request) (
 	}
 
 	return userInfo, "", 0
+}
+
+func (s *AuthServer) ModifyPasswordRequest(w http.ResponseWriter, req *http.Request) (interface{}, string, int) {
+	b, err := ioutil.ReadAll(req.Body)
+	if err != nil {
+		return nil, err.Error(), -1
+	}
+
+	input := types.ModifyPasswordInput{}
+	err = json.Unmarshal(b, &input)
+	if err != nil {
+		return nil, err.Error(), -2
+	}
+
+	if input.AuthCode == "" {
+		return nil, "auth code is must", -3
+	}
+
+	if input.OldPassword == input.NewPassword {
+		return nil, "password is not changed", -4
+	}
+
+	if input.NewPassword == "" {
+		return nil, "new password is must", -5
+	}
+
+	info, err := s.redisClient.QueryAuthInfo(input.AuthCode)
+	if err != nil {
+		return nil, err.Error(), -6
+	}
+
+	user, err := s.mysqlClient.QueryUserWithPassword(info.Username, input.OldPassword)
+	if err != nil {
+		return nil, err.Error(), -7
+	}
+
+	user.Passwd = input.NewPassword
+	err = s.mysqlClient.UpdateAuthUser(*user)
+	if err != nil {
+		return nil, err.Error(), -8
+	}
+
+	return nil, "", 0
 }
 
 func (s *AuthServer) Run() error {
@@ -204,6 +243,12 @@ func (s *AuthServer) Run() error {
 	httpdaemon.RegisterRouter(httpdaemon.HttpRouter{
 		Location: types.UserInfoAPI,
 		Handler:  s.UserInfoRequest,
+		Method:   "POST",
+	})
+
+	httpdaemon.RegisterRouter(httpdaemon.HttpRouter{
+		Location: types.ModifyPasswordAPI,
+		Handler:  s.ModifyPasswordRequest,
 		Method:   "POST",
 	})
 

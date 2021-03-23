@@ -12,6 +12,7 @@ import (
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
 	"golang.org/x/xerrors"
+	"math/rand"
 )
 
 type MysqlConfig struct {
@@ -79,6 +80,29 @@ func (cli *MysqlCli) saltedPassword(password string, salt string) string {
 	mac.Write([]byte(password))
 	sum := mac.Sum(nil)
 	return hex.EncodeToString(sum[0:])[0:12]
+}
+
+func randStringBytesRmndr(n int) string {
+	const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+"
+	b := make([]byte, n)
+	for i := range b {
+		b[i] = letterBytes[rand.Int63()%int64(len(letterBytes))]
+	}
+	return string(b)
+}
+
+func (cli *MysqlCli) UpdateAuthUser(user AuthUser) error {
+	user.Salt = randStringBytesRmndr(32)
+	user.Passwd = cli.saltedPassword(user.Passwd, user.Salt)
+	rc := cli.db.Save(&user)
+	return rc.Error
+}
+
+func (cli *MysqlCli) InsertAuthUser(user AuthUser) error {
+	user.Salt = randStringBytesRmndr(32)
+	user.Passwd = cli.saltedPassword(user.Passwd, user.Salt)
+	rc := cli.db.Create(&user)
+	return rc.Error
 }
 
 func (cli *MysqlCli) QueryUserWithPassword(username string, passwd string) (*AuthUser, error) {

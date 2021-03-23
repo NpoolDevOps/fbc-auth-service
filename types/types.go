@@ -22,6 +22,13 @@ type UserInfoInput struct {
 
 type UserInfoOutput struct {
 	Id          uuid.UUID `json:"user_id"`
+	Username    string    `json:"username"`
 	SuperUser   bool      `json:"super_user"`
 	VisitorOnly bool      `json:"visitor_only"`
+}
+
+type ModifyPasswordInput struct {
+	AuthCode    string `json:"auth_code"`
+	OldPassword string `json:"old_password"`
+	NewPassword string `json:"new_password"`
 }
