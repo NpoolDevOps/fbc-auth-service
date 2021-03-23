@@ -19,3 +19,10 @@ func TestCheckSuperUser(t *testing.T) {
 		AuthCode: "9a084e991104f774f1a8e56c30af6f4abd9696c24757835e0d5c4991ba122f8c",
 	})
 }
+
+func TestCheckUser(t *testing.T) {
+	CheckUser(types.CheckUserInput{
+		AuthCode: "9a084e991104f774f1a8e56c30af6f4abd9696c24757835e0d5c4991ba122f8c",
+		Username: "entropytest",
+	})
+}

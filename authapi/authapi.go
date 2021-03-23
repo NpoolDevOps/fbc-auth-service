@@ -102,7 +102,7 @@ func UserInfo(input types.UserInfoInput) (*types.UserInfoOutput, error) {
 	return &output, err
 }
 
-func CheckUser(info types.CheckUserInput) (bool, error) {
+func CheckUser(input types.CheckUserInput) (bool, error) {
 	host, err := getAuthHost()
 	if err != nil {
 		log.Errorf(log.Fields{}, "fail to get %v from etcd: %v", authDomain, err)
@@ -124,7 +124,7 @@ func CheckUser(info types.CheckUserInput) (bool, error) {
 		return false, xerrors.Errorf("NON-200 return")
 	}
 
-	apiResp, err := httpdaemon.ParseResponse(resp)
+	_, err = httpdaemon.ParseResponse(resp)
 	if err != nil {
 		return false, err
 	}
