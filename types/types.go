@@ -11,7 +11,8 @@ type UserLoginInput struct {
 }
 
 type UserLoginOutput struct {
-	AuthCode string `json:"auth_code"`
+	AuthCode  string `json:"auth_code"`
+	TargetUrl string `json:"target"`
 }
 
 type UserInfoInput struct {

@@ -77,20 +77,33 @@ func (s *AuthServer) UserLoginRequest(w http.ResponseWriter, req *http.Request) 
 		return nil, err.Error(), -1
 	}
 
-	input := types.UserLoginInput{}
-	err = json.Unmarshal(b, &input)
+	err = req.ParseForm()
 	if err != nil {
 		return nil, err.Error(), -2
 	}
 
-	appId, err := s.mysqlClient.QueryAppId(input.AppId)
+	hasTarget := false
+	targetUrl := ""
+
+	if url, ok := req.Form["target"]; ok {
+		hasTarget = true
+		targetUrl = url[0]
+	}
+
+	input := types.UserLoginInput{}
+	err = json.Unmarshal(b, &input)
 	if err != nil {
 		return nil, err.Error(), -3
 	}
 
-	user, err := s.mysqlClient.QueryUserWithPassword(input.Username, input.Password)
+	appId, err := s.mysqlClient.QueryAppId(input.AppId)
 	if err != nil {
 		return nil, err.Error(), -4
+	}
+
+	user, err := s.mysqlClient.QueryUserWithPassword(input.Username, input.Password)
+	if err != nil {
+		return nil, err.Error(), -5
 	}
 
 	if user.Id != appId.UserId {
@@ -131,6 +144,10 @@ func (s *AuthServer) UserLoginRequest(w http.ResponseWriter, req *http.Request) 
 		output.AuthCode = authCodeStr
 	} else {
 		output.AuthCode = userInfo.AuthCode
+	}
+
+	if hasTarget {
+		output.TargetUrl = targetUrl
 	}
 
 	return output, "", 0
