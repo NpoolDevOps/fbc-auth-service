@@ -93,9 +93,11 @@ func (s *AuthServer) UserLoginRequest(w http.ResponseWriter, req *http.Request) 
 		return nil, err.Error(), -4
 	}
 
-	if user.Id != appId.UserId {
-		return nil, "app id is not belong to user id", -5
-	}
+	/*
+		if user.Id != appId.UserId {
+			return nil, "app id is not belong to user id", -5
+		}
+	*/
 
 	output := types.UserLoginOutput{}
 	type MyClaims struct {
