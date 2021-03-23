@@ -38,3 +38,11 @@ type CreateUserInput struct {
 	Username string `json:"username"`
 	Password string `json:"password"`
 }
+
+type UserListInput struct {
+	AuthCode string `json:"auth_code"`
+}
+
+type UserListOutput struct {
+	Users []string `json:"users"`
+}

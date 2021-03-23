@@ -175,3 +175,11 @@ func (cli *MysqlCli) QuerySuperUser(id uuid.UUID) (*SuperUser, error) {
 
 	return &superUser, nil
 }
+
+func (cli *MysqlCli) QueryAuthUsers() []string {
+	var users []string
+
+	cli.db.Model(&AuthUser{}).Pluck("username", &users)
+
+	return users
+}

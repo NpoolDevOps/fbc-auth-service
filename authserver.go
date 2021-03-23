@@ -287,6 +287,42 @@ func (s *AuthServer) CreateUserRequest(w http.ResponseWriter, req *http.Request)
 	return nil, "", 0
 }
 
+func (s *AuthServer) UserListRequest(w http.ResponseWriter, req *http.Request) (interface{}, string, int) {
+	b, err := ioutil.ReadAll(req.Body)
+	if err != nil {
+		return nil, err.Error(), -1
+	}
+
+	input := types.UserListInput{}
+	err = json.Unmarshal(b, &input)
+	if err != nil {
+		return nil, err.Error(), -2
+	}
+
+	if input.AuthCode == "" {
+		return nil, "auth code is must", -3
+	}
+
+	info, err := s.redisClient.QueryAuthInfo(input.AuthCode)
+	if err != nil {
+		return nil, err.Error(), -7
+	}
+
+	user, err := s.mysqlClient.QueryAuthUser(info.Username)
+	if err != nil {
+		return nil, err.Error(), -8
+	}
+
+	_, err = s.mysqlClient.QuerySuperUser(user.Id)
+	if err != nil {
+		return nil, err.Error(), -9
+	}
+
+	users := s.mysqlClient.QueryAuthUsers()
+
+	return types.UserListOutput{Users: users}, "", 0
+}
+
 func (s *AuthServer) Run() error {
 	httpdaemon.RegisterRouter(httpdaemon.HttpRouter{
 		Location: types.UserLoginAPI,
@@ -315,6 +351,12 @@ func (s *AuthServer) Run() error {
 	httpdaemon.RegisterRouter(httpdaemon.HttpRouter{
 		Location: types.CreateUserAPI,
 		Handler:  s.CreateUserRequest,
+		Method:   "POST",
+	})
+
+	httpdaemon.RegisterRouter(httpdaemon.HttpRouter{
+		Location: types.UserListAPI,
+		Handler:  s.UserListRequest,
 		Method:   "POST",
 	})
 
