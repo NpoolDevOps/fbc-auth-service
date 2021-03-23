@@ -13,7 +13,7 @@ type UserLoginInput struct {
 
 type UserLoginOutput struct {
 	AuthCode  string `json:"auth_code"`
-	TargetUrl string `json:"target"`
+	TargetUrl string `json:"target_url"`
 }
 
 type UserInfoInput struct {
