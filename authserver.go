@@ -270,9 +270,13 @@ func (s *AuthServer) CreateUserRequest(w http.ResponseWriter, req *http.Request)
 		return nil, err.Error(), -8
 	}
 
-	_, err = s.mysqlClient.QuerySuperUser(user.Id)
+	superUser, err := s.mysqlClient.QuerySuperUser(user.Id)
 	if err != nil {
 		return nil, err.Error(), -9
+	}
+
+	if superUser.Visitor {
+		return nil, "user is visitor, permission denied", -10
 	}
 
 	err = s.mysqlClient.InsertAuthUser(authmysql.AuthUser{
@@ -281,7 +285,7 @@ func (s *AuthServer) CreateUserRequest(w http.ResponseWriter, req *http.Request)
 		Passwd:   input.Password,
 	})
 	if err != nil {
-		return nil, err.Error(), -10
+		return nil, err.Error(), -11
 	}
 
 	return nil, "", 0
