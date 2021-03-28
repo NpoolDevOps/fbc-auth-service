@@ -12,30 +12,8 @@ import (
 
 const authDomain = "auth.npool.top"
 
-type authHostConfig struct {
-	Host string `json:"host"`
-}
-
-func getAuthHost() (string, error) {
-	var myConfig authHostConfig
-
-	resp, err := etcdcli.Get(authDomain)
-	if err != nil {
-		log.Errorf(log.Fields{}, "cannot get %v: %v", authDomain, err)
-		return "", err
-	}
-
-	err = json.Unmarshal([]byte(resp[0]), &myConfig)
-	if err != nil {
-		log.Errorf(log.Fields{}, "cannot parse %v: %v", string(resp[0]), err)
-		return "", err
-	}
-
-	return myConfig.Host, err
-}
-
 func Login(input types.UserLoginInput) (*types.UserLoginOutput, error) {
-	host, err := getAuthHost()
+	host, err := etcdcli.GetHostByDomain(authDomain)
 	if err != nil {
 		log.Errorf(log.Fields{}, "fail to get %v from etcd: %v", authDomain, err)
 		return nil, err
