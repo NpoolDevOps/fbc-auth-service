@@ -56,3 +56,11 @@ type UsernameInfoOutput struct {
 	Id       uuid.UUID `json:"id"`
 	Username string    `json:"username"`
 }
+
+type VisitorOwnerInput struct {
+	AuthCode string `json:"auth_code"`
+}
+
+type VisitorOwnerOutput struct {
+	Owner uuid.UUID `json:"id"`
+}

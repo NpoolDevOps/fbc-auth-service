@@ -8,4 +8,5 @@ const (
 	CreateUserAPI     = "/api/v0/user/create"
 	UsernameInfoAPI   = "/api/v0/user/nameinfo"
 	UserListAPI       = "/api/v0/user/list"
+	VisitorOwnerAPI   = "/api/v0/user/owner"
 )

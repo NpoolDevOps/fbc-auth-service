@@ -369,6 +369,42 @@ func (s *AuthServer) UsernameInfoRequest(w http.ResponseWriter, req *http.Reques
 	}, "", 0
 }
 
+func (s *AuthServer) VisitorOwnerRequest(w http.ResponseWriter, req *http.Request) (interface{}, string, int) {
+	b, err := ioutil.ReadAll(req.Body)
+	if err != nil {
+		return nil, err.Error(), -1
+	}
+
+	input := types.VisitorOwnerInput{}
+	err = json.Unmarshal(b, &input)
+	if err != nil {
+		return nil, err.Error(), -2
+	}
+
+	if input.AuthCode == "" {
+		return nil, "auth code is must", -3
+	}
+
+	info, err := s.redisClient.QueryAuthInfo(input.AuthCode)
+	if err != nil {
+		return nil, err.Error(), -4
+	}
+
+	user, err := s.mysqlClient.QueryAuthUser(info.Username)
+	if err != nil {
+		return nil, err.Error(), -5
+	}
+
+	owner, err := s.mysqlClient.QueryVisitorOwner(user.Id)
+	if err != nil {
+		return nil, err.Error(), -6
+	}
+
+	return types.VisitorOwnerOutput{
+		Owner: owner,
+	}, "", 0
+}
+
 func (s *AuthServer) Run() error {
 	httpdaemon.RegisterRouter(httpdaemon.HttpRouter{
 		Location: types.UserLoginAPI,
@@ -409,6 +445,12 @@ func (s *AuthServer) Run() error {
 	httpdaemon.RegisterRouter(httpdaemon.HttpRouter{
 		Location: types.UsernameInfoAPI,
 		Handler:  s.UsernameInfoRequest,
+		Method:   "POST",
+	})
+
+	httpdaemon.RegisterRouter(httpdaemon.HttpRouter{
+		Location: types.VisitorOwnerAPI,
+		Handler:  s.VisitorOwnerRequest,
 		Method:   "POST",
 	})
 

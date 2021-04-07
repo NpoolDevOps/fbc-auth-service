@@ -113,3 +113,37 @@ func UsernameInfo(input types.UsernameInfoInput) (*types.UsernameInfoOutput, err
 
 	return &output, err
 }
+
+func VisitorOwner(input types.VisitorOwnerInput) (*types.VisitorOwnerOutput, error) {
+	host, err := getAuthHost()
+	if err != nil {
+		log.Errorf(log.Fields{}, "fail to get %v from etcd: %v", authDomain, err)
+		return nil, err
+	}
+
+	log.Infof(log.Fields{}, "req to http://%v%v", host, types.UsernameInfoAPI)
+
+	resp, err := httpdaemon.R().
+		SetHeader("Content-Type", "application/json").
+		SetBody(input).
+		Post(fmt.Sprintf("http://%v%v", host, types.UsernameInfoAPI))
+	if err != nil {
+		log.Errorf(log.Fields{}, "heartbeat error: %v", err)
+		return nil, err
+	}
+
+	if resp.StatusCode() != 200 {
+		return nil, xerrors.Errorf("NON-200 return")
+	}
+
+	apiResp, err := httpdaemon.ParseResponse(resp)
+	if err != nil {
+		return nil, err
+	}
+
+	output := types.UsernameInfoOutput{}
+	b, _ := json.Marshal(apiResp.Body)
+	err = json.Unmarshal(b, &output)
+
+	return &output, err
+}

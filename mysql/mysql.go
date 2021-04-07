@@ -142,6 +142,23 @@ func (cli *MysqlCli) QueryAuthUser(username string) (*AuthUser, error) {
 	return &user, nil
 }
 
+type visitorOwner struct {
+	Visitor uuid.UUID `gorm:"visitor"`
+	Owner   uuid.UUID `gorm:"owner"`
+}
+
+func (cli *MysqlCli) QueryVisitorOwner(visitor uuid.UUID) (uuid.UUID, error) {
+	var visitorOwner visitorOwner
+	var count int
+
+	cli.db.Where("visitor = ?", visitor).Find(&visitorOwner).Count(&count)
+	if count == 0 {
+		return uuid.New(), xerrors.Errorf("not a visitor")
+	}
+
+	return visitorOwner.Owner, nil
+}
+
 type AppId struct {
 	Id     uuid.UUID `gorm:"column:id"`
 	UserId uuid.UUID `gorm:"column:user_id"`
