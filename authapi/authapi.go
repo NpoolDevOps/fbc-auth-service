@@ -47,7 +47,7 @@ func Login(input types.UserLoginInput) (*types.UserLoginOutput, error) {
 }
 
 func UserInfo(input types.UserInfoInput) (*types.UserInfoOutput, error) {
-	host, err := getAuthHost()
+	host, err := etcdcli.GetHostByDomain(authDomain)
 	if err != nil {
 		log.Errorf(log.Fields{}, "fail to get %v from etcd: %v", authDomain, err)
 		return nil, err
@@ -81,7 +81,7 @@ func UserInfo(input types.UserInfoInput) (*types.UserInfoOutput, error) {
 }
 
 func UsernameInfo(input types.UsernameInfoInput) (*types.UsernameInfoOutput, error) {
-	host, err := getAuthHost()
+	host, err := etcdcli.GetHostByDomain(authDomain)
 	if err != nil {
 		log.Errorf(log.Fields{}, "fail to get %v from etcd: %v", authDomain, err)
 		return nil, err
@@ -115,18 +115,18 @@ func UsernameInfo(input types.UsernameInfoInput) (*types.UsernameInfoOutput, err
 }
 
 func VisitorOwner(input types.VisitorOwnerInput) (*types.VisitorOwnerOutput, error) {
-	host, err := getAuthHost()
+	host, err := etcdcli.GetHostByDomain(authDomain)
 	if err != nil {
 		log.Errorf(log.Fields{}, "fail to get %v from etcd: %v", authDomain, err)
 		return nil, err
 	}
 
-	log.Infof(log.Fields{}, "req to http://%v%v", host, types.UsernameInfoAPI)
+	log.Infof(log.Fields{}, "req to http://%v%v", host, types.VisitorOwnerAPI)
 
 	resp, err := httpdaemon.R().
 		SetHeader("Content-Type", "application/json").
 		SetBody(input).
-		Post(fmt.Sprintf("http://%v%v", host, types.UsernameInfoAPI))
+		Post(fmt.Sprintf("http://%v%v", host, types.VisitorOwnerAPI))
 	if err != nil {
 		log.Errorf(log.Fields{}, "heartbeat error: %v", err)
 		return nil, err
@@ -141,7 +141,7 @@ func VisitorOwner(input types.VisitorOwnerInput) (*types.VisitorOwnerOutput, err
 		return nil, err
 	}
 
-	output := types.UsernameInfoOutput{}
+	output := types.VisitorOwnerOutput{}
 	b, _ := json.Marshal(apiResp.Body)
 	err = json.Unmarshal(b, &output)
 
