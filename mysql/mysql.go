@@ -142,13 +142,14 @@ func (cli *MysqlCli) QueryAuthUser(username string) (*AuthUser, error) {
 	return &user, nil
 }
 
-type visitorOwner struct {
-	Visitor uuid.UUID `gorm:"column:visitor_only"`
-	Owner   uuid.UUID `gorm:"column:id"`
+type SuperUser struct {
+	Id          uuid.UUID `gorm:"column:id"`
+	Visitor     bool      `gorm:"column:visitor"`
+	VisitorOnly bool      `gorm:"column:visitor_only"`
 }
 
 func (cli *MysqlCli) QueryVisitorOwner(visitor uuid.UUID) (uuid.UUID, error) {
-	var visitorOwner visitorOwner
+	var visitorOwner SuperUser
 	var count int
 
 	cli.db.Where("visitor = ?", visitor).Find(&visitorOwner).Count(&count)
@@ -156,7 +157,7 @@ func (cli *MysqlCli) QueryVisitorOwner(visitor uuid.UUID) (uuid.UUID, error) {
 		return uuid.New(), xerrors.Errorf("not a visitor")
 	}
 
-	return visitorOwner.Owner, nil
+	return visitorOwner.Id, nil
 }
 
 type AppId struct {
@@ -174,11 +175,6 @@ func (cli *MysqlCli) QueryAppId(id uuid.UUID) (*AppId, error) {
 	}
 
 	return &appId, nil
-}
-
-type SuperUser struct {
-	Id      uuid.UUID `gorm:"column:id"`
-	Visitor bool      `gorm:"column:visitor_only"`
 }
 
 func (cli *MysqlCli) QuerySuperUser(id uuid.UUID) (*SuperUser, error) {
