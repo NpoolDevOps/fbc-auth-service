@@ -143,8 +143,8 @@ func (cli *MysqlCli) QueryAuthUser(username string) (*AuthUser, error) {
 }
 
 type visitorOwner struct {
-	Visitor uuid.UUID `gorm:"visitor_only"`
-	Owner   uuid.UUID `gorm:"id"`
+	Visitor uuid.UUID `gorm:"column:visitor_only"`
+	Owner   uuid.UUID `gorm:"column:id"`
 }
 
 func (cli *MysqlCli) QueryVisitorOwner(visitor uuid.UUID) (uuid.UUID, error) {
