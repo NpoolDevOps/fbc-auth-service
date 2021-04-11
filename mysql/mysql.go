@@ -144,7 +144,7 @@ func (cli *MysqlCli) QueryAuthUser(username string) (*AuthUser, error) {
 
 type visitorOwner struct {
 	Visitor uuid.UUID `gorm:"visitor"`
-	Owner   uuid.UUID `gorm:"owner"`
+	Owner   uuid.UUID `gorm:"id"`
 }
 
 func (cli *MysqlCli) QueryVisitorOwner(visitor uuid.UUID) (uuid.UUID, error) {
