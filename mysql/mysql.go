@@ -144,7 +144,7 @@ func (cli *MysqlCli) QueryAuthUser(username string) (*AuthUser, error) {
 
 type SuperUser struct {
 	Id          uuid.UUID `gorm:"column:id"`
-	Visitor     bool      `gorm:"column:visitor"`
+	Visitor     uuid.UUID `gorm:"column:visitor"`
 	VisitorOnly bool      `gorm:"column:visitor_only"`
 }
 

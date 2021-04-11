@@ -181,7 +181,7 @@ func (s *AuthServer) UserInfoRequest(w http.ResponseWriter, req *http.Request) (
 
 	super, err := s.mysqlClient.QuerySuperUser(user.Id)
 	if err == nil {
-		userInfo.VisitorOnly = super.Visitor
+		userInfo.VisitorOnly = super.VisitorOnly
 		userInfo.SuperUser = true
 	}
 
@@ -275,7 +275,7 @@ func (s *AuthServer) CreateUserRequest(w http.ResponseWriter, req *http.Request)
 		return nil, err.Error(), -9
 	}
 
-	if superUser.Visitor {
+	if superUser.VisitorOnly {
 		return nil, "user is visitor, permission denied", -10
 	}
 
